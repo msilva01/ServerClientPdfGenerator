@@ -1,15 +1,27 @@
-var builder = WebApplication.CreateBuilder(args);
+using System.Reflection;
+using Hangfire;
+using Hangfire.MemoryStorage;
+using ServerClientPdfGenerator.Hubs;
+using ServerClientPdfGenerator.Services;
 
-// Add services to the container.
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowCORS",
+        policy => { policy.SetIsOriginAllowed(x => true).AllowAnyMethod().AllowAnyHeader().AllowCredentials(); });
+});
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSignalR();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddHangfire(x => x.UseMemoryStorage());
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+builder.Services.AddScoped<IViewRenderService, ViewRenderService>();
+builder.Services.AddRazorPages();
+builder.Services.AddHangfireServer();
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -19,7 +31,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.UseHangfireDashboard();
 app.MapControllers();
-
+app.MapHub<ReportsHub>("/hub");
 app.Run();
