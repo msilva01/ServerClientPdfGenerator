@@ -84,7 +84,6 @@ public class ReportCommandHandler(
             using var ms = new MemoryStream();
             await result.CopyToAsync(ms, cancellationToken);
             ms.Seek(0, SeekOrigin.Begin);
-            //var bytes = ms.ToArray();
             var dto = new ReportDto()
             {
                 Id = Guid.NewGuid().ToString(),
