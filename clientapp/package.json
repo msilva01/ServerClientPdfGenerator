@@ -79,5 +79,16 @@
   },
   "overrides": {
     "react-error-overlay": "6.0.9"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "lines": 80
+      }
+    },
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    }
   }
+
 }
