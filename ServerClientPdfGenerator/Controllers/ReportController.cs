@@ -18,4 +18,13 @@ public class ReportController (IMediator mediator, ILogger<ReportController> log
         var response = await mediator.Send(request, cancellationToken);
         return Ok(response);
     }
+    
+    [HttpGet("[action]")]
+    public async Task<FileResult> Download(string fileName, string name, CancellationToken cancellationToken)
+    {
+        logger.LogDebug($"Download Case History Report : {fileName} - name of the file: {name} ");
+        var response = await mediator.Send(new DownloadCommand() { Filename=fileName, Name=name }, cancellationToken);
+
+        return File(response, "application/octet-stream", name);
+    }
 }
