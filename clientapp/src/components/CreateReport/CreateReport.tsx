@@ -8,25 +8,54 @@ import CardActions from "@mui/material/CardActions";
 import { PostAsync } from "../../utils/DataWorker";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
-import { useState } from "react";
 import { SignalRContext } from "../../Services/SignalRContext";
 import { JobProcessingCallbacksNames, ReportDto } from "../../Services/hub";
 import FileDownloader from "../../utils/FileDownloader";
+import { useReducer, useState } from "react";
 
 export interface CreateReportProps {
   id?: string;
 }
 
+interface DownloadInfo {
+  downloadId: string;
+  fileName: string;
+}
+
+interface DownloadState {
+  downloadData: DownloadInfo;
+}
+
+interface DownloadAction {
+  type: string;
+  payload: DownloadInfo;
+}
+
+function downloadReducer(state: DownloadState, action: DownloadAction) {
+  const { type, payload } = action;
+  switch (type) {
+    case "add":
+      return { downloadData: payload };
+
+    default:
+      return state;
+  }
+}
 export function CreateReport({ id = "" }: CreateReportProps) {
-  const [downloadId, setDownloadId] = useState("");
-  const [downloadName, setDownloadName] = useState("");
+  const [state, dispatch] = useReducer(downloadReducer, {
+    downloadData: { downloadId: "", fileName: "" },
+  });
+
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   SignalRContext.useSignalREffect(
     JobProcessingCallbacksNames.reportReady,
     (reportDto: ReportDto) => {
-      setDownloadId(reportDto.id);
-      setDownloadName(reportDto.fileName);
+      dispatch({
+        type: "add",
+        payload: { downloadId: reportDto.id, fileName: reportDto.fileName },
+      });
+
       toast.success(`Report Finished ${reportDto.fileName}`);
     },
     []
@@ -57,8 +86,8 @@ export function CreateReport({ id = "" }: CreateReportProps) {
       <FileDownloader
         show={showDownloadModal}
         onHide={() => setShowDownloadModal(false)}
-        filename={downloadId}
-        name={downloadName}
+        filename={state?.downloadData?.downloadId}
+        name={state?.downloadData?.fileName}
         title="Downloading Report"
         url="Report/Download"
       ></FileDownloader>
@@ -75,7 +104,7 @@ export function CreateReport({ id = "" }: CreateReportProps) {
           <Button
             variant="contained"
             color="primary"
-            disabled={downloadId === ""}
+            disabled={state?.downloadData?.downloadId === ""}
             onClick={() => setShowDownloadModal(true)}
           >
             <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon>&nbsp;Download
